@@ -1,4 +1,4 @@
-#include "main_window.h"
+#include "pte_select_video_window.h"
 
 namespace pte
 {
@@ -68,59 +68,5 @@ namespace pte
 
         file.close();
         return true;
-    }
-
-    main_window::main_window() : QMainWindow(nullptr)
-    {
-        init_widgets();
-        organize_widgets();
-        connect_widgets();
-    }
-
-    void main_window::start()
-    {
-        m_svw->exec();
-    }
-
-    void main_window::init_widgets()
-    {
-        m_svw = new select_video_window();
-        m_file_path = new QLineEdit(this);
-            m_file_path->setEnabled(false);
-        m_chart = new QChart(nullptr);
-        m_chart_view = new QChartView(m_chart);
-        m_video_profiles.assign(1,new QRadioButton("null",this));
-        m_play = new QPushButton("Play",this);
-    }
-
-    void main_window::organize_widgets()
-    {
-        QGridLayout* main_layout = new QGridLayout(this);
-        main_layout->addWidget(m_file_path,0,0);
-        main_layout->addWidget(m_chart_view,1,0);
-
-        size_t ind=2;
-        for(QRadioButton* i : m_video_profiles)
-        {
-            main_layout->addWidget(i, ind,0);
-            ind++;
-        }
-
-        main_layout->addWidget(m_play,ind,1);
-
-        QWidget* proxy = new QWidget(this);
-        proxy->setLayout(main_layout);
-
-        setCentralWidget(proxy);
-    }
-
-    void main_window::connect_widgets()
-    {
-        connect(m_svw, &select_video_window::start_main_window,
-                [this](const QString& _path)
-        {
-            m_file_path->setText(_path);
-            this->show();
-        });
     }
 }

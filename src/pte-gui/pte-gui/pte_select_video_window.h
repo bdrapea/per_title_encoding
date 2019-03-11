@@ -9,6 +9,7 @@
 #include <QErrorMessage>
 #include <QtCharts>
 #include <QRadioButton>
+#include <QGroupBox>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -39,27 +40,4 @@ namespace pte
         void start_main_window(const QString&);
     };
 
-    using namespace QtCharts;
-
-    class main_window : public QMainWindow
-    {
-        Q_OBJECT
-
-    private:
-        select_video_window* m_svw;
-        QLineEdit* m_file_path;
-        QChartView* m_chart_view;
-        QChart* m_chart;
-        std::vector<QRadioButton*> m_video_profiles;
-        QPushButton* m_play;
-
-    public:
-        main_window();
-
-    public:
-        void start();
-        void init_widgets();
-        void organize_widgets();
-        void connect_widgets();
-    };
 }
