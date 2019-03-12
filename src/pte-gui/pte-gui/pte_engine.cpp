@@ -66,8 +66,8 @@ namespace pte
         int stream = 0;
         stream = av_find_best_stream(format_context,AVMEDIA_TYPE_VIDEO,-1,-1,&cdc,0);
         AVStream* video_stream = format_context->streams[err];
-        profile.width = video_stream->codecpar->width;
-        profile.height = video_stream->codecpar->height;
+        profile.width = static_cast<uint16_t>(video_stream->codecpar->width);
+        profile.height = static_cast<uint16_t>(video_stream->codecpar->height);
 
         avformat_close_input(&format_context);
         avformat_free_context(format_context);

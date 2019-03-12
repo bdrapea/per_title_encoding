@@ -14,9 +14,9 @@ namespace pte
 
     private:
         QChart* m_chart;
-        QLineSeries* m_metric_ssim;
-        QLineSeries* m_metric_psnr;
-        QLineSeries* m_metric_vmaf;
+        std::vector<QLineSeries*> m_metric_ssim;
+        std::vector<QLineSeries*> m_metric_psnr;
+        std::vector<QLineSeries*> m_metric_vmaf;
 
         QValueAxis* m_psnr_axis;
         QValueAxis* m_ssim_axis;
@@ -27,11 +27,14 @@ namespace pte
     public:
         metrics_chart(QWidget* parent);
 
-        void init_widgets();
+        void init_axis();
+        void init_series(const uint16_t series);
 
     public slots:
         void show_psnr_axe(bool ischecked);
         void show_ssim_axe(bool ischecked);
         void show_vmaf_axe(bool ischecked);
+
+        friend class main_window;
     };
 }

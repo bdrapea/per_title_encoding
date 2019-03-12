@@ -57,9 +57,43 @@ namespace pte
                 [this](const QString& _path)
         {
             std::vector<video_profile> profiles = m_engine.get_video_profiles(_path.toStdString().c_str());
-
             m_video_profiles = generate_profiles(profiles);
+
+            for(size_t i=0; i<m_video_profiles.size(); i++)
+            {
+                connect(m_video_profiles[i], &QCheckBox::toggled, [this,i](const bool ischecked)
+                {
+                    if(ischecked)
+                    {
+                        if(m_psnr->isChecked())
+                            m_metric_chart->m_metric_psnr[i]->setVisible(true);
+
+                        if(m_ssim->isChecked())
+                            m_metric_chart->m_metric_ssim[i]->setVisible(true);
+
+                        if(m_vmaf->isChecked())
+                            m_metric_chart->m_metric_vmaf[i]->setVisible(true);
+
+                    }
+                    else
+                    {
+                        if(m_psnr->isChecked())
+                            m_metric_chart->m_metric_psnr[i]->setVisible(false);
+
+                        if(m_ssim->isChecked())
+                            m_metric_chart->m_metric_ssim[i]->setVisible(false);
+
+                        if(m_vmaf->isChecked())
+                            m_metric_chart->m_metric_vmaf[i]->setVisible(false);
+                    }
+                });
+            }
+
             m_file_path->setText(_path);
+            m_metric_chart->init_series(static_cast<uint16_t>(profiles.size()));
+            m_metric_chart->show_psnr_axe(m_psnr->isChecked());
+            m_metric_chart->show_ssim_axe(m_ssim->isChecked());
+            m_metric_chart->show_vmaf_axe(m_vmaf->isChecked());
             this->show();
         });
 
@@ -119,9 +153,59 @@ namespace pte
             export_dialog->exec();
         });
 
-        connect(m_psnr, &QCheckBox::toggled, m_metric_chart, &metrics_chart::show_psnr_axe);
-        connect(m_ssim, &QCheckBox::toggled, m_metric_chart, &metrics_chart::show_ssim_axe);
-        connect(m_vmaf, &QCheckBox::toggled, m_metric_chart, &metrics_chart::show_vmaf_axe);
+        connect(m_psnr, &QCheckBox::toggled,[this](bool ischecked)
+        {
+            m_metric_chart->show_psnr_axe(ischecked);
+
+            if(ischecked)
+            for(size_t i=0; i<m_metric_chart->m_metric_psnr.size(); i++)
+            {
+                if(m_video_profiles[i]->isChecked())
+                    m_metric_chart->m_metric_psnr[i]->setVisible(true);
+                else
+                    m_metric_chart->m_metric_psnr[i]->setVisible(false);
+            }
+
+            else
+            for(size_t i=0; i<m_metric_chart->m_metric_psnr.size(); i++)
+                    m_metric_chart->m_metric_psnr[i]->setVisible(false);
+        });
+
+        connect(m_ssim, &QCheckBox::toggled,[this](bool ischecked)
+        {
+            m_metric_chart->show_ssim_axe(ischecked);
+
+            if(ischecked)
+            for(size_t i=0; i<m_metric_chart->m_metric_ssim.size(); i++)
+            {
+                if(m_video_profiles[i]->isChecked())
+                    m_metric_chart->m_metric_ssim[i]->setVisible(true);
+                else
+                    m_metric_chart->m_metric_ssim[i]->setVisible(false);
+            }
+
+            else
+            for(size_t i=0; i<m_metric_chart->m_metric_ssim.size(); i++)
+                    m_metric_chart->m_metric_ssim[i]->setVisible(false);
+        });
+
+        connect(m_vmaf, &QCheckBox::toggled,[this](bool ischecked)
+        {
+            m_metric_chart->show_vmaf_axe(ischecked);
+
+            if(ischecked)
+            for(size_t i=0; i<m_metric_chart->m_metric_vmaf.size(); i++)
+            {
+                if(m_video_profiles[i]->isChecked())
+                    m_metric_chart->m_metric_vmaf[i]->setVisible(true);
+                else
+                    m_metric_chart->m_metric_vmaf[i]->setVisible(false);
+            }
+
+            else
+            for(size_t i=0; i<m_metric_chart->m_metric_vmaf.size(); i++)
+                    m_metric_chart->m_metric_vmaf[i]->setVisible(false);
+        });
     }
 
     std::vector<QCheckBox*> main_window::generate_profiles(const std::vector<video_profile> &profiles)

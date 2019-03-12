@@ -42,5 +42,8 @@ namespace pte
         void organize_widgets();
         void connect_widgets();
         std::vector<QCheckBox*> generate_profiles(const std::vector<video_profile>& profiles);
+
+    signals:
+        void show_graphs(bool, const std::vector<bool>&);
     };
 }
