@@ -58,10 +58,11 @@ namespace pte
         {
             std::vector<video_profile> profiles = m_engine.get_video_profiles(_path.toStdString().c_str());
             m_video_profiles = generate_profiles(profiles);
+            m_profiles = profiles;
 
             for(size_t i=0; i<m_video_profiles.size(); i++)
             {
-                connect(m_video_profiles[i], &QCheckBox::toggled, [this,i](const bool ischecked)
+                connect(m_video_profiles[i], &QCheckBox::toggled, [this,i,profiles](const bool ischecked)
                 {
                     if(ischecked)
                     {
@@ -73,7 +74,6 @@ namespace pte
 
                         if(m_vmaf->isChecked())
                             m_metric_chart->m_metric_vmaf[i]->setVisible(true);
-
                     }
                     else
                     {
@@ -206,6 +206,8 @@ namespace pte
             for(size_t i=0; i<m_metric_chart->m_metric_vmaf.size(); i++)
                     m_metric_chart->m_metric_vmaf[i]->setVisible(false);
         });
+
+        connect(m_play, &QPushButton::clicked, this, &main_window::play_pte);
     }
 
     std::vector<QCheckBox*> main_window::generate_profiles(const std::vector<video_profile> &profiles)
@@ -243,5 +245,27 @@ namespace pte
         m_layout->addWidget(put_in_VGroupbox(radio_profiles,"Video profiles", this),4,0);
 
         return radio_profiles;
+    }
+
+    void main_window::play_pte()
+    {
+        static bool once = 0;
+        if(!once)
+        {
+            auto per_title = [this]()
+            {
+                std::string reference = m_file_path->text().toStdString();
+                uint32_t bitrate = 0;
+
+                /*Select profile*/
+                video_profile profile = m_engine.m_profiles[4];
+
+            };
+        };
+
+        QtConcurrent::run(per_title);
+
+        once = !once;
+        }
     }
 }

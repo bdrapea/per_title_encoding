@@ -6,6 +6,8 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <algorithm>
+#include <QProcess>
 
 extern "C"
 {
@@ -20,18 +22,23 @@ namespace pte
         uint16_t width = 0;
         uint16_t height = 0;
         uint32_t bitrate_offset = 0;
+        std::string name = "main";
+        uint32_t threshold = 0;
     };
 
     class engine
     {
-    private:
+    public:
         std::vector<video_profile> m_profiles;
 
-    public:
         engine();
 
         std::vector<video_profile> get_video_profiles(const char* path);
         video_profile get_video_profile(const char* path);
+        void get_psnr_ssim(const char* diff, const char* ref, double& psnr, double& ssim);
+        std::string encode_video(const char* ref,
+                                 const video_profile& profile_dif,
+                                 const uint32_t bitrate);
     };
 }
 
