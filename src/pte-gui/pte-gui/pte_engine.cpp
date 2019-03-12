@@ -43,18 +43,35 @@ namespace pte
     video_profile engine::get_video_profile(const char* path)
     {
         video_profile profile;
-        AVFormatContext* format_context = avformat_alloc_context();
-        avformat_open_input(&format_context, path, nullptr, nullptr);
-        AVCodec* cdc = nullptr;
-        int stream_index = av_find_best_stream(format_context, AVMEDIA_TYPE_VIDEO,-1,-1,&cdc,0);
-        AVStream* video_stream = format_context->streams[stream_index];
-        AVCodecParameters* codec_context = video_stream->codecpar;
+        int err = 0;
+        av_register_all();
 
-        profile.width = static_cast<uint16_t>(codec_context->width);
-        profile.height = static_cast<uint16_t>(codec_context->height);
+        AVFormatContext* format_context = avformat_alloc_context();
+
+        if(!format_context)
+        {
+            std::cerr << "Format context is null" << std::endl;
+            return video_profile();
+        }
+
+        if(err = avformat_open_input(&format_context,path,nullptr,nullptr))
+        {
+            char buff[256];
+            av_make_error_string(buff, sizeof(buff), err);
+            std::cerr << buff << std::endl;
+            return video_profile();
+        }
+
+        AVCodec* cdc = nullptr;
+        int stream = 0;
+        stream = av_find_best_stream(format_context,AVMEDIA_TYPE_VIDEO,-1,-1,&cdc,0);
+        AVStream* video_stream = format_context->streams[err];
+        profile.width = video_stream->codecpar->width;
+        profile.height = video_stream->codecpar->height;
 
         avformat_close_input(&format_context);
         avformat_free_context(format_context);
+
         return profile;
     }
 }

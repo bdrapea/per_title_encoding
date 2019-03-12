@@ -2,6 +2,7 @@
 
 #include <QtCharts>
 #include <iostream>
+#include <vector>
 
 namespace pte
 {
@@ -20,6 +21,8 @@ namespace pte
         QValueAxis* m_psnr_axis;
         QValueAxis* m_ssim_axis;
         QValueAxis* m_vmaf_axis;
+
+        QValueAxis* m_bitrate_axis;
 
     public:
         metrics_chart(QWidget* parent);

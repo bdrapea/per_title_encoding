@@ -10,7 +10,6 @@
 
 namespace pte
 {
-
     using namespace QtCharts;
 
     class main_window : public QMainWindow

@@ -17,7 +17,6 @@ namespace pte
             m_metric_psnr->setName("PSNR");
             m_metric_psnr->setPen(QPen(QBrush(Qt::red),Qt::DotLine));
 
-
         m_metric_ssim = new QLineSeries(m_chart);
             m_metric_ssim->setName("SSIM");
             m_metric_ssim->setPen(QPen(QBrush(Qt::blue),Qt::SolidLine));
@@ -40,6 +39,12 @@ namespace pte
         m_vmaf_axis->setMax(1);
         m_vmaf_axis->setMin(0);
         m_vmaf_axis->setTitleText("VMAF");
+
+        m_bitrate_axis = new QValueAxis(nullptr);
+        m_bitrate_axis->setRange(0,10000);
+        m_bitrate_axis->setTitleText("Bitrate (kbit/s)");
+
+        m_chart->addAxis(m_bitrate_axis, Qt::AlignBottom);
 
         setChart(m_chart);
     }

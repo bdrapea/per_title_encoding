@@ -56,7 +56,9 @@ namespace pte
         connect(m_svw, &select_video_window::start_main_window,
                 [this](const QString& _path)
         {
-            m_video_profiles = generate_profiles(m_engine.get_video_profiles(_path.toStdString().c_str()));
+            std::vector<video_profile> profiles = m_engine.get_video_profiles(_path.toStdString().c_str());
+
+            m_video_profiles = generate_profiles(profiles);
             m_file_path->setText(_path);
             this->show();
         });
@@ -98,6 +100,21 @@ namespace pte
         connect(m_export_but, &QPushButton::clicked, [this]()
         {
             QFileDialog* export_dialog = new QFileDialog(this);
+            QString str = "";
+            connect(export_dialog, &QFileDialog::urlSelected, [&str, this](const QUrl& url)
+            {
+                str = url.toString(QUrl::RemoveScheme);
+                QStringRef ref(&str,2,str.size()-2);
+                str = ref.toString();
+
+                QFile file(str.append("/export.png"));
+                file.open(QIODevice::WriteOnly);
+                QPixmap pix(size());
+                render(&pix);
+
+                pix.save(&file,"PNG");
+            });
+
             export_dialog->setFileMode(QFileDialog::Directory);
             export_dialog->exec();
         });
