@@ -19,7 +19,7 @@ namespace pte
 
         m_ssim_axis = new QValueAxis(nullptr);
         m_ssim_axis->setMax(1);
-        m_ssim_axis->setMin(0.85);
+        m_ssim_axis->setMin(0);
         m_ssim_axis->setTitleText("SSIM");
 
         m_vmaf_axis = new QValueAxis(nullptr);

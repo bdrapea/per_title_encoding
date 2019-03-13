@@ -1,9 +1,11 @@
 #pragma once
 
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QFuture>
 #include <QtConcurrent/QtConcurrent>
+#include <QDesktopWidget>
 
 #include "pte_select_video_window.h"
 #include "pte_qt_utilities.h"
@@ -28,6 +30,7 @@ namespace pte
         QPushButton* m_play;
         QPushButton* m_stop;
         QSpinBox* m_offset;
+        QDoubleSpinBox* m_condition;
         QCheckBox* m_psnr;
         QCheckBox* m_ssim;
         QCheckBox* m_vmaf;
@@ -35,6 +38,7 @@ namespace pte
         QString m_export_path = __FILE__;
         engine m_engine;
         std::vector<video_profile> m_profiles;
+        QLabel* m_log;
 
     public:
         main_window();
@@ -45,12 +49,9 @@ namespace pte
         void organize_widgets();
         void connect_widgets();
         std::vector<QCheckBox*> generate_profiles(const std::vector<video_profile>& profiles);
+        void per_title();
 
     public slots:
         void play_pte();
-
-    signals:
-        void show_graphs(bool, const std::vector<bool>&);
-        void append_ssim(double, double);
     };
 }

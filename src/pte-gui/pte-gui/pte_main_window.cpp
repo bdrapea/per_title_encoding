@@ -4,7 +4,8 @@ namespace pte
 {
     main_window::main_window() : QMainWindow(nullptr)
     {
-        setMinimumSize(1280,720);
+        setMinimumSize(QApplication::desktop()->screenGeometry().width()*0.7f,
+                       QApplication::desktop()->screenGeometry().height()*0.7f);
         init_widgets();
         organize_widgets();
         connect_widgets();
@@ -20,17 +21,29 @@ namespace pte
         m_svw = new select_video_window();
         m_change_path = new QPushButton("Change file");
         m_file_path = new QLineEdit(this);
-        m_export_but = new QPushButton("export graph in");
         m_metric_chart = new metrics_chart(this);
+
         m_offset = new QSpinBox(this);
             m_offset->setMaximum(10000);
             m_offset->setMinimum(0);
             m_offset->setSingleStep(100);
+            m_offset->setSuffix(" kbit/s");
+
+        m_condition = new QDoubleSpinBox(this);
+            m_condition->setMaximum(1);
+            m_condition->setSingleStep(0.0001);
+            m_condition->setMinimum(0.0001);
+            m_condition->setDecimals(4);
+
         m_play = new QPushButton("Play",this);
         m_stop = new QPushButton("Stop", this);
+            m_stop->setDisabled(true);
         m_psnr = new QCheckBox("PSNR", this);
+            m_psnr->setDisabled(true);
         m_ssim = new QCheckBox("SSIM", this);
         m_vmaf = new QCheckBox("VMAF", this);
+            m_vmaf->setDisabled(true);
+        m_log = new QLabel("Press play\n\n\n ",this);
     }
 
     void main_window::organize_widgets()
@@ -39,11 +52,12 @@ namespace pte
         m_layout->addWidget(m_change_path,0,0);
         m_layout->addWidget(m_file_path,0,1,1,2);
         m_layout->addWidget(put_in_VGroupbox(std::vector<QChartView*>{m_metric_chart},"Metric's graph", this),1,0,1,3);
-        m_layout->addWidget(m_export_but,2,0);
-        m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_offset},"Offset (in kbit/s)", this),4,1);
-        m_layout->addWidget(put_in_VGroupbox(std::vector<QCheckBox*>{m_psnr, m_ssim, m_vmaf}  , "Available metrics", this),4,2);
-        m_layout->addWidget(m_play,5,2);
-        m_layout->addWidget(m_stop,6,2);
+        m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_offset},"Offset", this),2,1);
+        m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_condition},"Condition", this),3,1);
+        m_layout->addWidget(put_in_VGroupbox(std::vector<QCheckBox*>{m_psnr, m_ssim, m_vmaf}  , "Available metrics", this),2,0,3,1);
+        m_layout->addWidget(m_play,4,2);
+        m_layout->addWidget(m_stop,5,2);
+        m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_log},"", this),2,2);
 
         QWidget* proxy = new QWidget(this);
         proxy->setLayout(m_layout);
@@ -94,20 +108,16 @@ namespace pte
             m_metric_chart->show_psnr_axe(m_psnr->isChecked());
             m_metric_chart->show_ssim_axe(m_ssim->isChecked());
             m_metric_chart->show_vmaf_axe(m_vmaf->isChecked());
-            this->show();
+            this->showMaximized();
         });
 
         connect(m_play, &QPushButton::clicked, [this]()
         {
             m_change_path->setDisabled(true);
             m_file_path->setDisabled(true);
-            for(QCheckBox* i : m_video_profiles)
-                i->setDisabled(true);
-            m_psnr->setDisabled(true);
-            m_ssim->setDisabled(true);
-            m_vmaf->setDisabled(true);
             m_offset->setDisabled(true);
-
+            m_condition->setDisabled(true);
+            play_pte();
         });
 
         connect(m_stop, &QPushButton::clicked, [this]()
@@ -206,8 +216,6 @@ namespace pte
             for(size_t i=0; i<m_metric_chart->m_metric_vmaf.size(); i++)
                     m_metric_chart->m_metric_vmaf[i]->setVisible(false);
         });
-
-        connect(m_play, &QPushButton::clicked, this, &main_window::play_pte);
     }
 
     std::vector<QCheckBox*> main_window::generate_profiles(const std::vector<video_profile> &profiles)
@@ -242,7 +250,7 @@ namespace pte
                 }
             });
         }
-        m_layout->addWidget(put_in_VGroupbox(radio_profiles,"Video profiles", this),4,0);
+        m_layout->addWidget(put_in_VGroupbox(radio_profiles,"Video profiles", this),5,0,profiles.size(),1);
 
         return radio_profiles;
     }
@@ -252,20 +260,96 @@ namespace pte
         static bool once = 0;
         if(!once)
         {
-            auto per_title = [this]()
-            {
-                std::string reference = m_file_path->text().toStdString();
-                uint32_t bitrate = 0;
+            m_log->setText("Started...\n\n\n");
+            QtConcurrent::run(this, &main_window::per_title);
+            once = !once;
+        };
+    }
 
-                /*Select profile*/
-                video_profile profile = m_engine.m_profiles[4];
+    void main_window::per_title()
+    {
+        //Path to reference video
+        std::string path_to_ref = m_file_path->text().toStdString();
 
-            };
+        auto add_ssim = [this](const double br, const double ssim, const size_t index)
+        {
+            m_metric_chart->m_metric_ssim[index]->append(br,ssim);
         };
 
-        QtConcurrent::run(per_title);
+        auto compute_ssim = [this](const char* ref, const video_profile& p, const uint32_t bit_rate)->double
+        {
+            std::string path_to_encoded = m_engine.encode_video(ref, p, bit_rate*1000);
+            double ssim = 0,psnr = 0;
+            m_engine.get_psnr_ssim(path_to_encoded.c_str(),ref,psnr, ssim);
+            return ssim;
+        };
 
-        once = !once;
+        /**Extract selected profiles**/
+        std::vector<video_profile> profiles_to_encode;
+        for(size_t i=0; i<m_video_profiles.size(); i++)
+            if(m_video_profiles[i]->isChecked())
+                profiles_to_encode.push_back(m_profiles[i]);
+            else
+                profiles_to_encode.push_back(video_profile());
+
+        double max_y = 0;
+        uint32_t max_x = 0;
+
+        /**For each profile**/
+        for(size_t i=0; i<profiles_to_encode.size(); i++)
+        {
+
+            if(profiles_to_encode[i].height != video_profile().height)
+            {
+                std::stringstream ss;
+                uint32_t br = profiles_to_encode[i].bitrate_offset;
+                double ssim_x = 5, ssim_y = 10;
+
+                /**compute first ssim value**/
+                ssim_x = compute_ssim(path_to_ref.c_str(), profiles_to_encode[i],br);
+                add_ssim(br,ssim_x,i);
+
+                m_metric_chart->m_ssim_axis->setMin(ssim_x);
+                m_metric_chart->m_bitrate_axis->setMin(br);
+                ss.precision(6);
+                ss << std::fixed << ssim_x << ' ' << br << '\n';
+                m_log->setText(QString("profile=").append(QString::number(profiles_to_encode[i].width).append('x').append(QString::number(profiles_to_encode[i].height))
+                                                          .append(QString("\nlast ssim=").append(QString::number(ssim_x))
+                                                                  .append("\nbitrate=").append(QString::number(br))
+                                                                  .append("\nDiff=").append(QString::number(ssim_y-ssim_x)))));while(ssim_y - ssim_x >= m_condition->value())
+                {
+                    if(ssim_y <= 1)
+                        ssim_x = ssim_y;
+
+                    /**compute second ssim value**/
+                    br += profiles_to_encode[i].threshold;
+                    ssim_y = compute_ssim(path_to_ref.c_str(), profiles_to_encode[i],br);
+                    add_ssim(br,ssim_y,i);
+
+                    if(max_x < br) max_x = br;
+                    if(max_y < ssim_y) max_y = ssim_y;
+
+                    m_metric_chart->m_ssim_axis->setMax(max_y);
+                    m_metric_chart->m_bitrate_axis->setMax(max_x);
+                    ss << std::fixed << ssim_y << ' ' << br << '\n';
+
+                    m_log->setText(QString("profile=").append(QString::number(profiles_to_encode[i].width).append('x').append(QString::number(profiles_to_encode[i].height))
+                                                              .append(QString("\nlast ssim=").append(QString::number(ssim_y))
+                                                                      .append("\nbitrate=").append(QString::number(br))
+                                                                      .append("\nDiff=").append(QString::number(ssim_y-ssim_x)))));
+                }
+
+                m_log->setText(QString("Finish:").append(QString::number(profiles_to_encode[i].width).append('x').append(QString::number(profiles_to_encode[i].height))));
+
+                /**Generating log file**/
+                std::stringstream ss_log_name;
+                ss_log_name << get_path_folder(path_to_ref.c_str()) << "/" << profiles_to_encode[i].width << 'x'
+                            << profiles_to_encode[i].height << ".log";
+                std::ofstream log_file(ss_log_name.str().c_str(), std::ios::out);
+                if(!log_file.is_open()) std::cerr << "log_file is not generated" << std::endl;
+                log_file << ss.str();
+                log_file.close();
+            }
         }
     }
 }

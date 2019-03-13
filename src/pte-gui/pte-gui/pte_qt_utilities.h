@@ -21,4 +21,15 @@ namespace pte
         gr->setLayout(layout);
         return gr;
     }
+
+    inline std::string get_path_folder(const char* path)
+    {
+        std::string str = path;
+
+        size_t ind = str.size()-1;
+
+        while(str[ind] != '/') ind--;
+
+        return str.substr(0,ind);
+    }
 }

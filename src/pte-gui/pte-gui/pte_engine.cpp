@@ -91,6 +91,7 @@ namespace pte
         psnr = QString(str.substr(str.find("average:")+8,8).c_str()).toDouble();
 
         std::cout << str << std::endl;
+        remove(diff);
     }
 
     std::string engine::encode_video(const char *ref,
@@ -111,6 +112,9 @@ namespace pte
         std::string encoded_name = ss.str().c_str();
         std::string path_to_encoded_video = str_ref.substr(0,ind+1).append(encoded_name);
         std::string path_to_encoded_video_not_scaled = str_ref.substr(0,ind+1).append("S").append(encoded_name);
+        path_to_encoded_video_not_scaled[path_to_encoded_video_not_scaled.size()-3] = 't';
+        path_to_encoded_video_not_scaled[path_to_encoded_video_not_scaled.size()-2] = 's';
+        path_to_encoded_video_not_scaled.pop_back();
 
         std::stringstream cmd;
         cmd << "ffmpeg -y -i " << ref << " -an -c:v libx265 -b:v "
@@ -122,18 +126,28 @@ namespace pte
             cmd << "main10 -g " << 100 << " -r 25 "<<  " -pix_fmt yuv420p10le ";
         cmd << "-s " << profile_dif.width <<'x' << profile_dif.height << ' ' << path_to_encoded_video_not_scaled;
 
+
         system(cmd.str().c_str());
 
+
+        std::cout << cmd.str() << std::endl;
         cmd.clear();
         cmd.str("");
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
+
+        path_to_encoded_video[path_to_encoded_video.size()-3] = 't';
+        path_to_encoded_video[path_to_encoded_video.size()-2] = 's';
+        path_to_encoded_video.pop_back();
+
         video_profile profile_ref = get_video_profile(ref);
         cmd << "ffmpeg -y -i " << path_to_encoded_video_not_scaled << " -s "
             << profile_ref.width <<'x' << profile_ref.height << ' ' << path_to_encoded_video;
         std::cout << cmd.str() << std::endl;
 
         system(cmd.str().c_str());
+
+        remove(path_to_encoded_video_not_scaled.c_str());
 
         return path_to_encoded_video;
     }
