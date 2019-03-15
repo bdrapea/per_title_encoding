@@ -36,6 +36,8 @@ namespace pte
         void connect_widgets();
         bool check_path(const QString& path);
 
+        void closeEvent(QCloseEvent* event);
+
     signals:
         void start_main_window(const QString&);
     };

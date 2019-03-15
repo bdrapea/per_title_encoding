@@ -6,6 +6,7 @@
 #include <QFuture>
 #include <QtConcurrent/QtConcurrent>
 #include <QDesktopWidget>
+#include <cmath>
 
 #include "pte_select_video_window.h"
 #include "pte_qt_utilities.h"
@@ -39,6 +40,7 @@ namespace pte
         engine m_engine;
         std::vector<video_profile> m_profiles;
         QLabel* m_log;
+        QLabel* m_status;
 
     public:
         main_window();

@@ -6,4 +6,6 @@ int main(int argc, char** argv)
     pte::main_window w;
     w.start();
     return app.exec();
+
+    return 0;
 }

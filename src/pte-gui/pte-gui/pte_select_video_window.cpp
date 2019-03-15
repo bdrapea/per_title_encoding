@@ -59,6 +59,12 @@ namespace pte
         });
     }
 
+    void select_video_window::closeEvent(QCloseEvent *event)
+    {
+        std::cout << "hey" << std::endl;
+        qApp->quit();
+    }
+
     bool select_video_window::check_path(const QString& path)
     {
         std::ifstream file(path.toStdString().c_str());

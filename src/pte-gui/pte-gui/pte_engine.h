@@ -30,6 +30,9 @@ namespace pte
     {
     public:
         std::vector<video_profile> m_profiles;
+        QProcess* m_encoding;
+        QProcess* m_scaling;
+        QProcess* m_measuring;
 
         engine();
 

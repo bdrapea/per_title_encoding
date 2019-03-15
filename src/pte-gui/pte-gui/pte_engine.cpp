@@ -14,6 +14,10 @@ namespace pte
             {640,360,100,"main",200},
             {480,270,100,"main",100}
         };
+
+        m_measuring = new QProcess();
+        m_scaling = new QProcess();
+        m_encoding = new QProcess();
     }
 
     std::vector<video_profile> engine::get_video_profiles(const char* path)
@@ -79,14 +83,14 @@ namespace pte
     {
         std::stringstream cmd;
         cmd << "ffmpeg -i " << diff << " -i " << ref << " -lavfi \"ssim;[0:v][1:v]psnr\" -f null –";
+        std::cout << "MESURE:\n" << cmd.str() << "\n\n\n" << std::endl;
 
-        QProcess process;
-        process.start(cmd.str().c_str());
-        process.waitForFinished();
-        QString output(process.readAllStandardError());
-        process.close();
-
+        m_measuring->start(cmd.str().c_str());
+        m_measuring->waitForFinished(-1);
+        QString output(m_measuring->readAllStandardError());
+        m_measuring->close();
         std::string str(output.toStdString());
+
         ssim = QString(str.substr(str.find("All:")+4,8).c_str()).toDouble();
         psnr = QString(str.substr(str.find("average:")+8,8).c_str()).toDouble();
 
@@ -125,12 +129,12 @@ namespace pte
         else
             cmd << "main10 -g " << 100 << " -r 25 "<<  " -pix_fmt yuv420p10le ";
         cmd << "-s " << profile_dif.width <<'x' << profile_dif.height << ' ' << path_to_encoded_video_not_scaled;
+        std::cout <<"ENCODAGE:\n" <<cmd.str() << "\n\n\n" << std::endl;
 
+        m_encoding->start(cmd.str().c_str());
+        m_encoding->waitForFinished(-1);
+        m_encoding->close();
 
-        system(cmd.str().c_str());
-
-
-        std::cout << cmd.str() << std::endl;
         cmd.clear();
         cmd.str("");
 
@@ -139,15 +143,21 @@ namespace pte
         path_to_encoded_video[path_to_encoded_video.size()-3] = 't';
         path_to_encoded_video[path_to_encoded_video.size()-2] = 's';
         path_to_encoded_video.pop_back();
-
         video_profile profile_ref = get_video_profile(ref);
-        cmd << "ffmpeg -y -i " << path_to_encoded_video_not_scaled << " -s "
+        if(profile_dif.height != profile_ref.height)
+        {
+            cmd << "ffmpeg -y -i " << path_to_encoded_video_not_scaled << " -s "
             << profile_ref.width <<'x' << profile_ref.height << ' ' << path_to_encoded_video;
-        std::cout << cmd.str() << std::endl;
-
-        system(cmd.str().c_str());
-
-        remove(path_to_encoded_video_not_scaled.c_str());
+            std::cout <<"RESCALLAGE:\n" <<cmd.str() << "\n\n\n" << std::endl;
+            m_scaling->start(cmd.str().c_str());
+            m_scaling->waitForFinished(-1);
+            m_scaling->close();
+            remove(path_to_encoded_video_not_scaled.c_str());
+        }
+        else
+        {
+            path_to_encoded_video = path_to_encoded_video_not_scaled;
+        }
 
         return path_to_encoded_video;
     }

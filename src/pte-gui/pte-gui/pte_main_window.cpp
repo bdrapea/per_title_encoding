@@ -43,7 +43,12 @@ namespace pte
         m_ssim = new QCheckBox("SSIM", this);
         m_vmaf = new QCheckBox("VMAF", this);
             m_vmaf->setDisabled(true);
-        m_log = new QLabel("Press play\n\n\n ",this);
+        m_log = new QLabel("\n\n\n\n", this);
+        m_status = new QLabel("Press play", this);
+        m_status->setFixedSize(1000,50);
+        QFont font = QFont("Courrier");
+        m_status->setFont(font);
+
     }
 
     void main_window::organize_widgets()
@@ -55,9 +60,10 @@ namespace pte
         m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_offset},"Offset", this),2,1);
         m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_condition},"Condition", this),3,1);
         m_layout->addWidget(put_in_VGroupbox(std::vector<QCheckBox*>{m_psnr, m_ssim, m_vmaf}  , "Available metrics", this),2,0,3,1);
-        m_layout->addWidget(m_play,4,2);
-        m_layout->addWidget(m_stop,5,2);
-        m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_log},"", this),2,2);
+        m_layout->addWidget(m_play,3,2);
+        m_layout->addWidget(m_stop,4,2);
+        m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_log},"Last measure", this),2,2);
+        m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_status},"Status", this),8,1,1,2);
 
         QWidget* proxy = new QWidget(this);
         proxy->setLayout(m_layout);
@@ -216,6 +222,19 @@ namespace pte
             for(size_t i=0; i<m_metric_chart->m_metric_vmaf.size(); i++)
                     m_metric_chart->m_metric_vmaf[i]->setVisible(false);
         });
+
+        connect(m_engine.m_encoding, &QProcess::readyReadStandardError, [this]()
+        {
+            m_status->setText(QString("Encoding:\n").append(m_engine.m_encoding->readAllStandardError()));
+        });
+        connect(m_engine.m_scaling, &QProcess::readyReadStandardError, [this]()
+        {
+            m_status->setText(QString("Scaling:\n").append(m_engine.m_scaling->readAllStandardError()));
+        });
+        connect(m_engine.m_measuring, &QProcess::readyReadStandardError, [this]()
+        {
+            m_status->setText(QString("Measuring:\n\n"));
+        });
     }
 
     std::vector<QCheckBox*> main_window::generate_profiles(const std::vector<video_profile> &profiles)
@@ -231,7 +250,6 @@ namespace pte
         {
             std::stringstream title;
             title << i.width << 'x' << i.height;
-
             radio_profiles[j] = new QCheckBox(title.str().c_str(), this);
             j++;
         }
@@ -258,12 +276,18 @@ namespace pte
     void main_window::play_pte()
     {
         static bool once = 0;
-        if(!once)
+        if(!once && (m_ssim->isChecked()+m_psnr->isChecked()+m_vmaf->isChecked()))
         {
             m_log->setText("Started...\n\n\n");
             QtConcurrent::run(this, &main_window::per_title);
             once = !once;
-        };
+        }
+        else
+        {
+            QErrorMessage* err = new QErrorMessage(this);
+            err->showMessage("Please select a metric");
+            connect(err, &QErrorMessage::accept, err, &QErrorMessage::close);
+        }
     }
 
     void main_window::per_title()
@@ -283,6 +307,19 @@ namespace pte
             m_engine.get_psnr_ssim(path_to_encoded.c_str(),ref,psnr, ssim);
             return ssim;
         };
+
+        auto display_last = [this](const video_profile& vp, const double ssim_x, const double ssim_y, const size_t br)
+        {
+            m_log->setText(QString("profile=")
+                        .append(QString::number(vp.width)
+                        .append('x')
+                        .append(QString::number(vp.height))
+                        .append(QString("\nlast ssim=")
+                        .append(QString::number(ssim_x))
+                        .append("\nbitrate=").append(QString::number(br))
+                        .append("\nDiff=").append(QString::number(ssim_y-ssim_x)))));
+        };
+
 
         /**Extract selected profiles**/
         std::vector<video_profile> profiles_to_encode;
@@ -313,10 +350,8 @@ namespace pte
                 m_metric_chart->m_bitrate_axis->setMin(br);
                 ss.precision(6);
                 ss << std::fixed << ssim_x << ' ' << br << '\n';
-                m_log->setText(QString("profile=").append(QString::number(profiles_to_encode[i].width).append('x').append(QString::number(profiles_to_encode[i].height))
-                                                          .append(QString("\nlast ssim=").append(QString::number(ssim_x))
-                                                                  .append("\nbitrate=").append(QString::number(br))
-                                                                  .append("\nDiff=").append(QString::number(ssim_y-ssim_x)))));while(ssim_y - ssim_x >= m_condition->value())
+
+                while(ssim_y - ssim_x >= m_condition->value())
                 {
                     if(ssim_y <= 1)
                         ssim_x = ssim_y;
@@ -333,13 +368,44 @@ namespace pte
                     m_metric_chart->m_bitrate_axis->setMax(max_x);
                     ss << std::fixed << ssim_y << ' ' << br << '\n';
 
-                    m_log->setText(QString("profile=").append(QString::number(profiles_to_encode[i].width).append('x').append(QString::number(profiles_to_encode[i].height))
-                                                              .append(QString("\nlast ssim=").append(QString::number(ssim_y))
-                                                                      .append("\nbitrate=").append(QString::number(br))
-                                                                      .append("\nDiff=").append(QString::number(ssim_y-ssim_x)))));
+                    display_last(profiles_to_encode[i],ssim_x,ssim_y,br);
                 }
 
-                m_log->setText(QString("Finish:").append(QString::number(profiles_to_encode[i].width).append('x').append(QString::number(profiles_to_encode[i].height))));
+                size_t br_y = br;
+                size_t br_x = (br) - profiles_to_encode[i].threshold;
+                size_t br_z = 0;
+                double ssim_z = 0;
+
+                size_t interval = br_y-br_x;
+
+                while(interval > 100)
+                {
+                    br_z = ((br_y-br_x)/2)+br_x;
+                    ssim_z = compute_ssim(path_to_ref.c_str(),profiles_to_encode[i],br_z);
+                    if(ssim_x - ssim_z < m_condition->value())
+                    {
+                        br_y = br_z;
+                    }
+                    else
+                    {
+                        br_x = br_z;
+                    }
+                    interval = br_y-br_x;
+                    ss << std::fixed << ssim_z << ' ' << br_z << '\n';
+                    display_last(profiles_to_encode[i],ssim_z,ssim_y,br_z);
+                }
+
+                QtCharts::QLineSeries* sho = new QtCharts::QLineSeries();
+                sho->setName("Débit optimal");
+                sho->append(br_z,0);
+                sho->append(br_z,ssim_z);
+                m_metric_chart->m_chart->addSeries(sho);
+                sho->attachAxis(m_metric_chart->m_ssim_axis);
+                sho->attachAxis(m_metric_chart->m_bitrate_axis);
+                sho->setVisible(true);
+
+                ss << std::fixed << ssim_z << ' ' << br_z << '\n';
+                display_last(profiles_to_encode[i],ssim_z,ssim_y,br_z);
 
                 /**Generating log file**/
                 std::stringstream ss_log_name;
@@ -350,6 +416,7 @@ namespace pte
                 log_file << ss.str();
                 log_file.close();
             }
+            m_status->setText("Finished !");
         }
     }
 }
