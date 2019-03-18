@@ -50,6 +50,8 @@ namespace pte
             m_status->setFixedHeight(50);
             QFont font = QFont("Courrier");
             m_status->setFont(font);
+
+        m_load_graph = new QPushButton("Load graph from log file",this);
     }
 
     void main_window::organize_widgets()
@@ -62,8 +64,9 @@ namespace pte
         m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_condition},"SSIM condition", this),2,0);
         m_layout->addWidget(put_in_VGroupbox(std::vector<QCheckBox*>{m_psnr, m_ssim, m_vmaf}  , "Available metrics", this),3,0);
         m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_log},"Last measure", this),4,0);
-        m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_status},"Status", this),7,0,1,2);
         m_layout->addWidget(m_play,6,0);
+        m_layout->addWidget(m_load_graph,7,0);
+        m_layout->addWidget(put_in_VGroupbox(std::vector<QWidget*>{m_status},"Status", this),8,0,1,2);
 
         QWidget* proxy = new QWidget(this);
         proxy->setLayout(m_layout);
@@ -132,6 +135,7 @@ namespace pte
             m_ssim->setEnabled(true);
             m_condition->setEnabled(true);
             m_play->setEnabled(true);
+            m_load_graph->setEnabled(true);
 
             this->showMaximized();
         });
@@ -150,6 +154,7 @@ namespace pte
                 m_offset->setDisabled(true);
                 m_condition->setDisabled(true);
                 m_play->setDisabled(true);
+                m_load_graph->setDisabled(true);
 
                 play_pte();
             }
@@ -282,6 +287,8 @@ namespace pte
         {
             m_status->setText(QString("Measuring:\n\n"));
         });
+
+        connect(m_load_graph, &QPushButton::clicked, m_metric_chart, &metrics_chart::load_graph);
     }
 
     std::vector<QCheckBox*> main_window::generate_profiles(const std::vector<video_profile> &profiles)
@@ -462,6 +469,8 @@ namespace pte
                 log_file.close();
             }
             m_status->setText("Finished !");
+            std::string graph_path = get_path_folder(path_to_ref.c_str()) + QString::number(i).toStdString() + get_file_name(path_to_ref.c_str()) + "graph.png";
+            m_metric_chart->export_graph(graph_path.c_str());
         }
 
         m_change_path->setDisabled(false);
@@ -475,10 +484,9 @@ namespace pte
         m_offset->setDisabled(false);
         m_play->setDisabled(false);
         m_condition->setDisabled(false);
+        m_load_graph->setDisabled(false);
         m_started = false;
 
-        std::string graph_path = get_path_folder(path_to_ref.c_str()) + get_file_name(path_to_ref.c_str()) + "graph.png";
-        m_metric_chart->export_graph(graph_path.c_str());
     }
 
     void main_window::closeEvent(QCloseEvent*)

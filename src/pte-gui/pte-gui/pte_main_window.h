@@ -42,6 +42,7 @@ namespace pte
         std::vector<video_profile> m_profiles;
         QLabel* m_log;
         QLabel* m_status;
+        QPushButton* m_load_graph;
         bool m_started = false;
 
     public:

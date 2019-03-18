@@ -127,4 +127,22 @@ namespace pte
         export_image.save(path);
         update();
     }
+
+    void metrics_chart::load_graph()
+    {
+        std::vector<double> psnr,ssim;
+
+        std::ifstream file("/home/bdrapeaud/Bureau/FandF_1920x1080.log", std::ios::in | std::ios::binary | std::ios::ate);
+        if(!file.is_open())
+        {
+            std::cerr << "load graph: Cannot open file" << std::endl;
+            return;
+        }
+
+        long file_size = file.tellg();
+        file.seekg(0, std::ios::beg);
+        std::string buffer(static_cast<size_t>(file_size),0);
+        file.read(const_cast<char*>(buffer.data()),file_size);
+        file.close();
+    }
 }

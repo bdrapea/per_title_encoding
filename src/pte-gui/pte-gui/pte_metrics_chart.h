@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <iostream>
 #include <vector>
+#include <fstream>
 
 namespace pte
 {
@@ -38,7 +39,7 @@ namespace pte
         void show_ssim_axe(bool ischecked);
         void show_vmaf_axe(bool ischecked);
         void export_graph(const QString& path);
-        void load_graph(const QString& path);
+        void load_graph();
 
         friend class main_window;
     };
