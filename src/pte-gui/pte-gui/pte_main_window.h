@@ -5,6 +5,7 @@
 #include <QCheckBox>
 #include <QFuture>
 #include <QtConcurrent/QtConcurrent>
+#include <QFuture>
 #include <QDesktopWidget>
 #include <cmath>
 
@@ -41,6 +42,7 @@ namespace pte
         std::vector<video_profile> m_profiles;
         QLabel* m_log;
         QLabel* m_status;
+        bool m_started = false;
 
     public:
         main_window();
@@ -52,6 +54,7 @@ namespace pte
         void connect_widgets();
         std::vector<QCheckBox*> generate_profiles(const std::vector<video_profile>& profiles);
         void per_title();
+        void closeEvent(QCloseEvent*);
 
     public slots:
         void play_pte();

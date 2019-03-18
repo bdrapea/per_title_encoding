@@ -10,7 +10,8 @@ SOURCES += \
     pte_select_video_window.cpp \
     pte_main_window.cpp \
     pte_metrics_chart.cpp \
-    pte_engine.cpp
+    pte_engine.cpp \
+    pte_qt_utilities.cpp
 
 HEADERS += \
     pte_select_video_window.h \

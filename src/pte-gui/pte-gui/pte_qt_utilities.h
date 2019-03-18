@@ -3,6 +3,8 @@
 #include <QGroupBox>
 #include <QVBoxLayout>
 #include <vector>
+#include <iostream>
+#include <string>
 
 namespace pte
 {
@@ -32,4 +34,6 @@ namespace pte
 
         return str.substr(0,ind);
     }
+
+    std::string get_file_name(const char* file_path);
 }

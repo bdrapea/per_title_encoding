@@ -161,6 +161,36 @@ namespace pte
 
         return path_to_encoded_video;
     }
+
+    void engine::remove_all_encoded_file_from_folder(const char* path_to_folder,
+                                                     const char* path_to_ref)
+    {
+        std::string name_of_ref = get_file_name(path_to_ref);
+
+        //Delete the files which contains the reference name
+        DIR* dir;
+        struct dirent* dirp;
+        if((dir = opendir(path_to_folder)) != nullptr)
+        {
+            while((dirp = readdir(dir)) != nullptr)
+            {
+                std::string file_name = dirp->d_name;
+                std::string file_name_path = std::string(path_to_folder).append("/").append(file_name);
+
+                if(file_name.find(std::string("_").append(name_of_ref).c_str()) != std::string::npos)
+                {
+                    remove(file_name_path.c_str());
+                    std::clog << "Deleting:" << file_name << std::endl;
+                }
+            }
+        }
+
+        else
+        {
+            std::cerr << "Cannot open dir" << std::endl;
+            return;
+        }
+    }
 }
 
 std::ostream& operator<<(std::ostream& os, const pte::video_profile& profile)

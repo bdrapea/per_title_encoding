@@ -26,6 +26,7 @@ namespace pte
         QPushButton* m_select;
         QPushButton* m_next;
         QString m_file_path;
+        bool is_valid = false;
 
     public:
         select_video_window();
@@ -36,10 +37,10 @@ namespace pte
         void connect_widgets();
         bool check_path(const QString& path);
 
-        void closeEvent(QCloseEvent* event);
-
     signals:
         void start_main_window(const QString&);
+
+        friend class main_window;
     };
 
 }

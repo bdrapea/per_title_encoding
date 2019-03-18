@@ -3,7 +3,7 @@
 namespace pte
 {
     select_video_window::select_video_window() :
-        QDialog(nullptr)
+        QDialog(nullptr), is_valid(false)
     {
         init_widgets();
         organize_widgets();
@@ -54,15 +54,10 @@ namespace pte
             else
             {
                 this->close();
+                is_valid = true;
                 emit start_main_window(m_file_path);
             }
         });
-    }
-
-    void select_video_window::closeEvent(QCloseEvent *event)
-    {
-        std::cout << "hey" << std::endl;
-        qApp->quit();
     }
 
     bool select_video_window::check_path(const QString& path)

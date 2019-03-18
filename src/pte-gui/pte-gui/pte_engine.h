@@ -8,6 +8,10 @@
 #include <string>
 #include <algorithm>
 #include <QProcess>
+#include <dirent.h>
+#include <cstring>
+
+#include "pte_qt_utilities.h"
 
 extern "C"
 {
@@ -42,6 +46,8 @@ namespace pte
         std::string encode_video(const char* ref,
                                  const video_profile& profile_dif,
                                  const uint32_t bitrate);
+        void remove_all_encoded_file_from_folder(const char* path_to_folder,
+                                                 const char* path_to_ref);
     };
 }
 

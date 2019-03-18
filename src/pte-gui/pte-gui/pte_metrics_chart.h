@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCharts>
+#include <QMouseEvent>
 #include <iostream>
 #include <vector>
 
@@ -18,6 +19,8 @@ namespace pte
         std::vector<QLineSeries*> m_metric_psnr;
         std::vector<QLineSeries*> m_metric_vmaf;
 
+        std::vector<QLineSeries*> m_optimal_bitrate;
+
         QValueAxis* m_psnr_axis;
         QValueAxis* m_ssim_axis;
         QValueAxis* m_vmaf_axis;
@@ -34,6 +37,8 @@ namespace pte
         void show_psnr_axe(bool ischecked);
         void show_ssim_axe(bool ischecked);
         void show_vmaf_axe(bool ischecked);
+        void export_graph(const QString& path);
+        void load_graph(const QString& path);
 
         friend class main_window;
     };
