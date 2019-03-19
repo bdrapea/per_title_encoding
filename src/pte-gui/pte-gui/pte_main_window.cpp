@@ -438,7 +438,7 @@ namespace pte
                 double ssim_z = 0;
                 size_t interval = br_y-br_x;
 
-                while(interval > 100)
+                while(interval >= 100)
                 {
                     br_z = ((br_y-br_x)/2)+br_x;
                     ssim_z = compute_ssim_psnr(path_to_ref.c_str(),profiles_to_encode[i],br_z,psnr);

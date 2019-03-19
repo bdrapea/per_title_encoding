@@ -116,14 +116,12 @@ namespace pte
         std::string encoded_name = ss.str().c_str();
         std::string path_to_encoded_video = str_ref.substr(0,ind+1).append(encoded_name);
         std::string path_to_encoded_video_not_scaled = str_ref.substr(0,ind+1).append("S").append(encoded_name);
-        path_to_encoded_video_not_scaled[path_to_encoded_video_not_scaled.size()-3] = 't';
-        path_to_encoded_video_not_scaled[path_to_encoded_video_not_scaled.size()-2] = 's';
-        path_to_encoded_video_not_scaled.pop_back();
+        path_to_encoded_video_not_scaled = path_to_encoded_video_not_scaled.substr(0, path_to_encoded_video_not_scaled.size()-3).append("mp4");
 
         std::stringstream cmd;
         cmd << "ffmpeg -y -i " << ref << " -an -c:v libx265 -b:v "
             << bitrate << " -minrate " << bitrate << " -maxrate "
-            << bitrate << " -bufsize " << bitrate << " -profile:v ";
+            << bitrate << " -bufsize " << bitrate << " -profile:v -x265-params --strict-cbr ";
         if(profile_dif.name == "main")
             cmd << "main -g " << 100 << " -r 25 "<< " -pix_fmt yuv420p ";
         else
@@ -140,9 +138,8 @@ namespace pte
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-        path_to_encoded_video[path_to_encoded_video.size()-3] = 't';
-        path_to_encoded_video[path_to_encoded_video.size()-2] = 's';
-        path_to_encoded_video.pop_back();
+        path_to_encoded_video = path_to_encoded_video.substr(0, path_to_encoded_video.size()-3).append("mp4");
+
         video_profile profile_ref = get_video_profile(ref);
         if(profile_dif.height != profile_ref.height)
         {
@@ -166,7 +163,6 @@ namespace pte
                                                      const char* path_to_ref)
     {
         std::string name_of_ref = get_file_name(path_to_ref);
-
         //Delete the files which contains the reference name
         DIR* dir;
         struct dirent* dirp;
