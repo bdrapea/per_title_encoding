@@ -95,7 +95,7 @@ namespace pte
         psnr = QString(str.substr(str.find("average:")+8,8).c_str()).toDouble();
 
         std::cout << str << std::endl;
-        remove(diff);
+//        remove(diff);
     }
 
     std::string engine::encode_video(const char *ref,
@@ -121,7 +121,7 @@ namespace pte
         std::stringstream cmd;
         cmd << "ffmpeg -y -i " << ref << " -an -c:v libx265 -b:v "
             << bitrate << " -minrate " << bitrate << " -maxrate "
-            << bitrate << " -bufsize " << bitrate << " -profile:v -x265-params --strict-cbr ";
+            << bitrate << " -bufsize " << bitrate << " -x265-params --strict-cbr -profile:v ";
         if(profile_dif.name == "main")
             cmd << "main -g " << 100 << " -r 25 "<< " -pix_fmt yuv420p ";
         else
@@ -149,7 +149,7 @@ namespace pte
             m_scaling->start(cmd.str().c_str());
             m_scaling->waitForFinished(-1);
             m_scaling->close();
-            remove(path_to_encoded_video_not_scaled.c_str());
+//            remove(path_to_encoded_video_not_scaled.c_str());
         }
         else
         {
@@ -175,7 +175,7 @@ namespace pte
 
                 if(file_name.find(std::string("_").append(name_of_ref).c_str()) != std::string::npos)
                 {
-                    remove(file_name_path.c_str());
+//                    remove(file_name_path.c_str());
                     std::clog << "Deleting:" << file_name << std::endl;
                 }
             }

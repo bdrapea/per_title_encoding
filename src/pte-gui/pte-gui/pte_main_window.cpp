@@ -276,6 +276,7 @@ namespace pte
         connect(m_engine.m_encoding, &QProcess::readyReadStandardError, [this]()
         {
             m_status->setText(QString("Encoding:\n").append(m_engine.m_encoding->readAllStandardError()));
+            std::cout << m_status->text().toStdString() << std::endl;
         });
 
         connect(m_engine.m_scaling, &QProcess::readyReadStandardError, [this]()
